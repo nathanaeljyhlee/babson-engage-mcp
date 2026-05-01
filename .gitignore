@@ -1,0 +1,9 @@
+node_modules/
+dist/
+deploy.zip
+deploy-staging/
+.env
+.env.*
+*.log
+.vercel/
+demo/.vercel/

@@ -1,0 +1,38 @@
+name: Deploy MCP server to Azure App Service
+
+# To activate: rename this file to azure-app-service-deploy.yml and add the
+# AZURE_WEBAPP_PUBLISH_PROFILE secret (see README "Migrating to GitHub Actions").
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: babson-engage-mcp
+  NODE_VERSION: '20.x'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Prepare deploy bundle
+        run: |
+          mkdir -p deploy-bundle
+          cp -r dist node_modules package.json package-lock.json deploy-bundle/
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./deploy-bundle

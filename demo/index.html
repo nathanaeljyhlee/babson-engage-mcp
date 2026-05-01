@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Babson Engage Assistant</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+  :root {
+    --green: #00703C;
+    --green-light: #00894a;
+    --navy: #002855;
+    --bg: #f5f3ee;
+    --text: #1a1a1a;
+    --gray-400: #6b6860;
+    --gray-600: #9a9790;
+    --white: #ffffff;
+  }
+
+  *, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  /* ── Background ─────────────────────────────────────────── */
+
+  .bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .bg-layer::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -30%;
+    width: 90%;
+    height: 140%;
+    background: radial-gradient(ellipse, rgba(0,112,60,0.06) 0%, transparent 60%);
+    animation: drift 20s ease-in-out infinite alternate;
+  }
+
+  .bg-layer::after {
+    content: '';
+    position: absolute;
+    bottom: -40%;
+    right: -20%;
+    width: 80%;
+    height: 120%;
+    background: radial-gradient(ellipse, rgba(0,40,85,0.05) 0%, transparent 55%);
+    animation: drift 25s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(3%, -2%) scale(1.05); }
+  }
+
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(0,40,85,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,40,85,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 30%, transparent 100%);
+  }
+
+  /* ── Layout ─────────────────────────────────────────────── */
+
+  .page {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    grid-template-rows: 1fr auto;
+    height: 100vh;
+  }
+
+  /* ── Left panel ─────────────────────────────────────────── */
+
+  .panel-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem 2.5rem;
+    overflow: hidden;
+    min-height: 0;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.1s;
+  }
+
+  .logo {
+    height: 40px;
+    width: auto;
+    margin-bottom: 1.25rem;
+    align-self: flex-start;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    gap: 7px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green);
+    background: rgba(0,112,60,0.06);
+    border: 1px solid rgba(0,112,60,0.15);
+    padding: 5px 14px 5px 11px;
+    border-radius: 100px;
+    margin-bottom: 0.75rem;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green-light);
+    box-shadow: 0 0 8px rgba(0,137,74,0.6);
+    animation: pulse 2.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-weight: 400;
+    font-size: 2.6rem;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    color: var(--navy);
+    margin-bottom: 0.4rem;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--green);
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--gray-400);
+    max-width: 30ch;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── Feature cards ──────────────────────────────────────── */
+
+  .features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    background: rgba(0,40,85,0.02);
+    border: 1px solid rgba(0,40,85,0.08);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .pill:hover {
+    background: rgba(0,112,60,0.04);
+    border-color: rgba(0,112,60,0.15);
+    transform: translateX(4px);
+  }
+
+  .pill-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--green), var(--navy));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .pill-icon svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: var(--white);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .pill-text {
+    font-size: 0.78rem;
+    color: var(--gray-400);
+    line-height: 1.35;
+  }
+
+  .pill-text strong {
+    display: block;
+    color: var(--text);
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 1px;
+  }
+
+  /* ── Chat area ──────────────────────────────────────────── */
+
+  .chat-area {
+    display: flex;
+    align-items: stretch;
+    padding: 1.5rem 2rem 1.5rem 1.25rem;
+    overflow: hidden;
+    min-height: 0;
+    opacity: 0;
+    animation: fadeUp 0.7s ease forwards 0.3s;
+  }
+
+  .chat-frame {
+    flex: 1;
+    background: var(--white);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(0,40,85,0.08),
+      0 4px 16px rgba(0,0,0,0.06),
+      0 24px 64px rgba(0,0,0,0.1),
+      0 0 100px rgba(0,112,60,0.04);
+  }
+
+  .chat-frame::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 21px;
+    padding: 1px;
+    background: linear-gradient(160deg, rgba(0,112,60,0.2), transparent 35%, transparent 65%, rgba(0,40,85,0.12));
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .chat-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+  }
+
+  /* ── Starter prompts ─────────────────────────────────────── */
+
+  .chat-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .starters {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding-bottom: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .starters-label {
+    font-size: 0.72rem;
+    color: var(--gray-400);
+    font-weight: 500;
+    margin-right: 0.2rem;
+  }
+
+  .starter {
+    font-family: inherit;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--navy);
+    background: var(--white);
+    border: 1px solid rgba(0,40,85,0.12);
+    border-radius: 100px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .starter:hover {
+    background: rgba(0,112,60,0.06);
+    border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* ── Footer ─────────────────────────────────────────────── */
+
+  .footer {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 2.5rem;
+    border-top: 1px solid rgba(0,40,85,0.08);
+    font-size: 0.7rem;
+    color: var(--gray-600);
+    opacity: 0;
+    animation: fadeUp 0.5s ease forwards 0.8s;
+  }
+
+  .feedback-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 16px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--white);
+    background: var(--green);
+    border-radius: 100px;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .feedback-btn:hover {
+    background: var(--green-light);
+  }
+
+  .tech-stack {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .tech-stack span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .tech-stack span::before {
+    content: '';
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--gray-600);
+  }
+
+  .tech-stack span:first-child::before {
+    display: none;
+  }
+
+  /* ── Animations ─────────────────────────────────────────── */
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Responsive ─────────────────────────────────────────── */
+
+  @media (max-width: 860px) {
+    html, body {
+      overflow: auto;
+    }
+
+    .page {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto auto;
+      height: auto;
+      min-height: 100vh;
+    }
+
+    .panel-left {
+      padding: 1.5rem 1.25rem 1.25rem;
+      overflow: visible;
+    }
+
+    .logo { height: 34px; margin-bottom: 1rem; }
+
+    h1 { font-size: 2rem; }
+
+    .subtitle { margin-bottom: 1rem; }
+
+    .features {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .pill {
+      flex: 1 1 calc(50% - 0.2rem);
+      min-width: 140px;
+    }
+
+    .pill-icon { width: 28px; height: 28px; }
+    .pill-icon svg { width: 14px; height: 14px; }
+
+    .chat-area {
+      padding: 0 1rem 1rem;
+      height: 70vh;
+      min-height: 480px;
+    }
+
+    .chat-frame {
+      min-width: unset;
+    }
+
+    .footer {
+      flex-direction: column;
+      gap: 0.3rem;
+      text-align: center;
+      padding: 0.75rem 1.25rem;
+    }
+
+    .tech-stack { flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+  }
+
+  @media (max-width: 420px) {
+    .panel-left { padding: 1.25rem 1rem 1rem; }
+
+    h1 { font-size: 1.75rem; }
+
+    .pill { flex: 1 1 100%; }
+
+    .chat-area {
+      padding: 0 0.75rem 0.75rem;
+      height: 65vh;
+      min-height: 400px;
+    }
+
+    .chat-frame { border-radius: 14px; }
+    .chat-frame::before { border-radius: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-layer"></div>
+<div class="grid-overlay"></div>
+
+<div class="page">
+
+  <div class="panel-left">
+    <img src="babson-logo.png" alt="Babson College" class="logo">
+    <div class="badge">Live Agent</div>
+    <h1>Engage <em>Assistant</em></h1>
+    <p class="subtitle">Your AI guide to campus events, student clubs, and graduate life at Babson.</p>
+
+    <div class="features">
+      <div class="pill">
+        <div class="pill-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="pill-text">
+          <strong>Events</strong>
+          Search by date, topic, or category
+        </div>
+      </div>
+      <div class="pill">
+        <div class="pill-icon">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="pill-text">
+          <strong>60+ Clubs</strong>
+          Browse orgs and their missions
+        </div>
+      </div>
+      <div class="pill">
+        <div class="pill-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div class="pill-text">
+          <strong>Locations</strong>
+          Room details and campus spots
+        </div>
+      </div>
+      <div class="pill">
+        <div class="pill-icon">
+          <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        </div>
+        <div class="pill-text">
+          <strong>Free Food</strong>
+          Never miss a catered event
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-area">
+    <div class="chat-column">
+      <div class="starters">
+        <span class="starters-label">Try asking:</span>
+        <button class="starter" data-prompt="What events are happening on campus this week?">Events this week</button>
+        <button class="starter" data-prompt="Are there any events with free food today?">Free food today</button>
+        <button class="starter" data-prompt="What professional clubs can I join as an MBA student?">MBA clubs</button>
+        <button class="starter" data-prompt="Are there any career or networking events coming up?">Career events</button>
+        <button class="starter" data-prompt="What's happening this weekend at Babson?">This weekend</button>
+      </div>
+      <div class="chat-frame">
+        <iframe
+          id="bot-frame"
+          src="https://copilotstudio.microsoft.com/environments/Default-e83d2ad7-3bcd-4d5c-9d6c-6ffa1a4434bf/bots/cr370_agentn5rPUW/webchat?__version__=2"
+          title="Babson Engage Assistant"
+          allow="microphone *"
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <span>Babson AI Fellowship 2026 -- Nathanael Lee</span>
+    <a href="https://tally.so/r/lb777v" target="_blank" rel="noopener" class="feedback-btn">Share Feedback</a>
+    <div class="tech-stack">
+      <span>Microsoft Copilot Studio</span>
+      <span>Model Context Protocol</span>
+      <span>Azure Functions</span>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+document.querySelectorAll('.starter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const text = btn.getAttribute('data-prompt');
+    navigator.clipboard.writeText(text).then(() => {
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.style.borderColor = '#00703C';
+      btn.style.color = '#00703C';
+      setTimeout(() => {
+        btn.textContent = original;
+        btn.style.borderColor = '';
+        btn.style.color = '';
+      }, 1500);
+    });
+  });
+});
+</script>
+</body>
+</html>

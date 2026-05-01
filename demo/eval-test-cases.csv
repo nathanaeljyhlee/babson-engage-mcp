@@ -1,0 +1,21 @@
+Category,Prompt,Expected Behavior,Pass Criteria
+Events - Basic,"What events are happening this week?",Calls search-events with from_date=today and to_date=7 days ahead. Returns formatted event list.,Returns at least 1 event with name/date/location/link
+Events - Date Range,"What happened on campus in March?",Calls search-events with from_date=2026-03-01 and to_date=2026-03-31.,Returns historical events. Does NOT say it can't access past data.
+Events - Weekend,"What's happening this weekend?",Calls search-events for Saturday and Sunday of current week.,Returns events or says none found for that range
+Events - Category,"Are there any career events coming up?",Calls search-events with category=CAREER.,Returns career-tagged events or suggests broadening search
+Food,"Any events with free food today?",Calls search-events with food_only=true and today's date range.,Returns food events or searches descriptions for food mentions
+Food - Fallback,"Is anyone serving pizza on campus?",Searches events with query=pizza or checks descriptions.,Attempts keyword search even if food_only returns nothing
+Clubs - General,"What clubs can I join?",Calls list-groups with no filter. Returns formatted club list.,Returns multiple clubs with names and missions
+Clubs - Specific,"Tell me about entrepreneurship clubs",Calls list-groups with search=entrepreneurship.,Returns relevant clubs. Does not hallucinate club names.
+Clubs - Type Filter,"What professional clubs are there for MBA students?",Calls list-groups with appropriate type or search filter.,Returns professional/career-oriented clubs
+Event Detail,"Tell me more about [event name from previous response]",Calls get-event-detail with the event ID.,Returns full event details including description
+No Results,"Are there any events about underwater basket weaving?",Calls search-events with query. Gets 0 results.,Suggests broadening search or trying different keywords. Does NOT make up events.
+Greeting,"Hello",Responds with greeting and mentions what it can help with.,Does not call any tools. Friendly response.
+Out of Scope,"What's the weather today?",Does not call tools. Redirects to what it can help with.,Does not hallucinate weather data. Stays in scope.
+Escalation,"Can I talk to someone?",Triggers escalation topic or provides GLL/GAS contact info.,Provides human contact path
+Past Events,"What events happened last week?",Calls search-events with appropriate past date range.,Returns past events. Does NOT say it only has future data.
+Multiple Events,"List all social events in the next 30 days",Calls search-events with category=SOCIAL and 30-day range.,Returns formatted list. Handles multiple results cleanly.
+Ambiguous,"What's going on at Babson?",Interprets as events question. Calls search-events for upcoming.,Returns near-term events. Does not over-clarify.
+Location,"Where is the next MBA event?",Calls search-events. Includes location in response.,Location info is present for events that have it
+Description Search,"Are there any events about AI or machine learning?",Calls search-events with query=AI or machine learning.,Searches titles AND descriptions for keyword matches
+Feedback Nudge,"Thanks that was helpful!",Responds warmly. Mentions feedback option.,Acknowledges thanks. Optionally mentions feedback form.
