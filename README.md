@@ -13,6 +13,24 @@ Built for the Babson AI Fellowship (Spring 2026) as infrastructure for the May 4
 
 Both currently deploy via manual `deploy.zip` upload. See "Migrating to GitHub Actions" below for the IT-handoff guide on switching to push-to-deploy.
 
+## Security
+
+This server fetches public Babson Engage RSS and iCal feeds — no FERPA-covered data is processed. A holistic security audit was performed in May 2026; see [`SECURITY.md`](./SECURITY.md) for the disclosure policy, data handling notes, and deployment recommendations. The full audit report covering both Babson MCP servers lives in the (private) `babson-canvas-mcp` repo at `SECURITY-AUDIT.md` since it cross-references both.
+
+**Security controls in place (always active):**
+
+- Rate limiting (60 req/min on `/mcp`)
+- Helmet security headers (X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security, etc.)
+- Body size limit (256 KB) on all JSON endpoints
+- `trust proxy` enabled so rate limiting applies per real client IP behind Azure
+- Cryptographic session IDs (`crypto.randomBytes`)
+- Non-root Docker container (`USER node`)
+- Zero `npm audit` vulnerabilities at HEAD
+
+**Optional defense-in-depth:** set `MCP_API_KEY` in the Azure App Service environment to require an `api-key` header on `/mcp` requests. Auth uses SHA-256 hash comparison (timing-safe, length-safe). Without the env var, the server runs in public mode (matches the pre-audit deployment behavior).
+
+**Reporting a vulnerability:** see `SECURITY.md`. Do not open public GitHub issues for security bugs.
+
 ## Data Sources
 
 | Source | URL | What it provides |
