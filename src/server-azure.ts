@@ -1,10 +1,31 @@
 #!/usr/bin/env node
 
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
+import crypto from "crypto";
+import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import { fetchEvents, fetchGroups, fetchPastEvents, type EngageEvent, type ICalEvent } from "./feeds.js";
+
+// ── API key authentication ───────────────────────────────────────────────────
+
+const MCP_API_KEY = process.env.MCP_API_KEY;
+
+if (!MCP_API_KEY) {
+  console.error("FATAL: MCP_API_KEY environment variable is required.");
+  process.exit(1);
+}
+
+function requireApiKey(req: Request, res: Response, next: NextFunction): void {
+  const key = (req.headers["api-key"] || req.headers["x-api-key"]) as string | undefined;
+  if (!key || !crypto.timingSafeEqual(Buffer.from(key), Buffer.from(MCP_API_KEY!))) {
+    res.status(401).json({ error: "Invalid or missing API key. Set api-key header." });
+    return;
+  }
+  next();
+}
 
 // ── Unified event type ───────────────────────────────────────────────────────
 
@@ -167,7 +188,10 @@ function createServer(): McpServer {
 // ── Express app with Streamable HTTP transport ──────────────────────────────
 
 const app = express();
-app.use(express.json());
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(express.json({ limit: "256kb" }));
+
+const mcpLimiter = rateLimit({ windowMs: 60_000, max: 60, standardHeaders: true, legacyHeaders: false });
 
 const PORT = parseInt(process.env.PORT || process.env.FUNCTIONS_HTTPWORKER_PORT || "8080", 10);
 
@@ -175,7 +199,7 @@ const PORT = parseInt(process.env.PORT || process.env.FUNCTIONS_HTTPWORKER_PORT 
 const sessions = new Map<string, { server: McpServer; transport: StreamableHTTPServerTransport }>();
 
 function generateSessionId(): string {
-  return `session-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return `session-${Date.now()}-${crypto.randomBytes(6).toString("hex")}`;
 }
 
 // Clean up stale sessions after 30 minutes
@@ -206,7 +230,7 @@ app.get("/", (_req, res) => {
 });
 
 // MCP endpoint -- supports sessions for Copilot Studio
-app.post("/mcp", async (req: Request, res: Response) => {
+app.post("/mcp", requireApiKey, mcpLimiter, async (req: Request, res: Response) => {
   const existingSessionId = req.headers["mcp-session-id"] as string | undefined;
 
   if (existingSessionId && sessions.has(existingSessionId)) {
@@ -243,7 +267,7 @@ app.post("/mcp", async (req: Request, res: Response) => {
 });
 
 // Handle GET for SSE streams on existing sessions
-app.get("/mcp", (req: Request, res: Response) => {
+app.get("/mcp", requireApiKey, mcpLimiter, (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   if (sessionId && sessions.has(sessionId)) {
     const { transport } = sessions.get(sessionId)!;
@@ -254,7 +278,7 @@ app.get("/mcp", (req: Request, res: Response) => {
 });
 
 // Handle DELETE to close sessions
-app.delete("/mcp", (req: Request, res: Response) => {
+app.delete("/mcp", requireApiKey, (req: Request, res: Response) => {
   const sessionId = req.headers["mcp-session-id"] as string | undefined;
   if (sessionId && sessions.has(sessionId)) {
     const s = sessions.get(sessionId)!;
