@@ -18,9 +18,19 @@ if (!MCP_API_KEY) {
   process.exit(1);
 }
 
+// Hash both keys to a fixed length before timingSafeEqual to avoid the
+// "Input buffers must have the same byte length" exception that happens
+// when keys differ in length (would otherwise return 500 instead of 401).
+const expectedKeyHash = crypto.createHash("sha256").update(MCP_API_KEY!).digest();
+
 function requireApiKey(req: Request, res: Response, next: NextFunction): void {
   const key = (req.headers["api-key"] || req.headers["x-api-key"]) as string | undefined;
-  if (!key || !crypto.timingSafeEqual(Buffer.from(key), Buffer.from(MCP_API_KEY!))) {
+  if (!key) {
+    res.status(401).json({ error: "Invalid or missing API key. Set api-key header." });
+    return;
+  }
+  const providedHash = crypto.createHash("sha256").update(key).digest();
+  if (!crypto.timingSafeEqual(providedHash, expectedKeyHash)) {
     res.status(401).json({ error: "Invalid or missing API key. Set api-key header." });
     return;
   }
@@ -188,6 +198,9 @@ function createServer(): McpServer {
 // ── Express app with Streamable HTTP transport ──────────────────────────────
 
 const app = express();
+// Azure App Service sits behind 1 proxy; trust X-Forwarded-For so req.ip
+// resolves to the real client IP for rate limiting and logs.
+app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: "256kb" }));
 
