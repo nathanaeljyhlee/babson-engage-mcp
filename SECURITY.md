@@ -32,5 +32,6 @@ You will receive acknowledgment within 2 business days.
 
 ## Deployment Notes
 
-- The `/mcp` endpoint requires a valid `MCP_API_KEY` header; do not expose this server without the API key configured in Azure App Service environment variables
-- The server is intended for use within the Babson College Azure tenant
+- The server runs in public mode by default (no auth on `/mcp`). To enable authentication, set `MCP_API_KEY` in Azure App Service Configuration; the middleware will then require the `api-key` (or `x-api-key`) header on all `/mcp` requests.
+- Other security hardening — rate limiting, helmet headers, body size limit, trust-proxy, non-root container — is always active.
+- The server is intended for use within the Babson College Azure tenant.
