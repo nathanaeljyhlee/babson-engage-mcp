@@ -9,21 +9,26 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { z } from "zod";
 import { fetchEvents, fetchGroups, fetchPastEvents, type EngageEvent, type ICalEvent } from "./feeds.js";
 
-// ── API key authentication ───────────────────────────────────────────────────
+// ── API key authentication (optional) ────────────────────────────────────────
+// Engage data is public (Babson RSS/iCal feeds), so this server runs without
+// auth by default. If MCP_API_KEY is set in env, it is enforced — set it to
+// add defense-in-depth and prevent uncontrolled programmatic enumeration.
 
 const MCP_API_KEY = process.env.MCP_API_KEY;
+const expectedKeyHash = MCP_API_KEY
+  ? crypto.createHash("sha256").update(MCP_API_KEY).digest()
+  : null;
 
 if (!MCP_API_KEY) {
-  console.error("FATAL: MCP_API_KEY environment variable is required.");
-  process.exit(1);
+  console.warn("MCP_API_KEY not set — running in public mode (no auth on /mcp).");
 }
 
-// Hash both keys to a fixed length before timingSafeEqual to avoid the
-// "Input buffers must have the same byte length" exception that happens
-// when keys differ in length (would otherwise return 500 instead of 401).
-const expectedKeyHash = crypto.createHash("sha256").update(MCP_API_KEY!).digest();
-
 function requireApiKey(req: Request, res: Response, next: NextFunction): void {
+  // No key configured = public mode (matches pre-audit behavior)
+  if (!expectedKeyHash) {
+    next();
+    return;
+  }
   const key = (req.headers["api-key"] || req.headers["x-api-key"]) as string | undefined;
   if (!key) {
     res.status(401).json({ error: "Invalid or missing API key. Set api-key header." });
